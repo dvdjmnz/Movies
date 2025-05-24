@@ -16,9 +16,15 @@ protocol TmdbDataSource {
     func getTvShowDetails(tvShowId: Int) -> Observable<TvShowDetailsDTO>
 }
 
-struct DefaultTmdbDataSource {
+class DefaultTmdbDataSource {
     let networkService: NetworkService
     
+    init(networkService: NetworkService) {
+        self.networkService = networkService
+    }
+}
+
+extension DefaultTmdbDataSource: TmdbDataSource {
     func getMovieGenres() -> Observable<[GenreDTO]> {
         let endpoint = TmdbEndpoint.getMovieGenres
         let request = APIRequest<GenresResponseDTO>(endpoint: endpoint)

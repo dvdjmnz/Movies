@@ -7,9 +7,15 @@
 
 import RxSwift
 
-struct DefaultGenresRepository: GenresRepository {
+class DefaultGenresRepository {
     let tmdbDataSource: TmdbDataSource
     
+    init(tmdbDataSource: TmdbDataSource) {
+        self.tmdbDataSource = tmdbDataSource
+    }
+}
+
+extension DefaultGenresRepository: GenresRepository {
     func getMovieGenres() -> Observable<[Genre]> {
         tmdbDataSource.getMovieGenres().map { $0.toDomain() }
     }

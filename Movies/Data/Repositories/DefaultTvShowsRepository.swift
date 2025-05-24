@@ -7,9 +7,15 @@
 
 import RxSwift
 
-struct DefaultTvShowsRepository: TvShowsRepository {
+class DefaultTvShowsRepository {
     let tmdbDataSource: TmdbDataSource
     
+    init(tmdbDataSource: TmdbDataSource) {
+        self.tmdbDataSource = tmdbDataSource
+    }
+}
+    
+extension DefaultTvShowsRepository: TvShowsRepository {
     func getTvShows(genre: Int) -> Observable<Page<TvShow>> {
         tmdbDataSource.getTvShows(genre: genre).map { $0.toDomain() }
     }

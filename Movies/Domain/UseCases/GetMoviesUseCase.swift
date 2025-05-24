@@ -11,9 +11,15 @@ protocol GetMoviesUseCase {
     func execute(genre: Int) -> Observable<Page<Movie>>
 }
 
-struct DefaultGetMoviesUseCase: GetMoviesUseCase {
+class DefaultGetMoviesUseCase {
     let repository: MoviesRepository
+    
+    init(repository: MoviesRepository) {
+        self.repository = repository
+    }
+}
 
+extension DefaultGetMoviesUseCase: GetMoviesUseCase {
     func execute(genre: Int) -> Observable<Page<Movie>> {
         repository.getMovies(genre: genre)
     }
