@@ -10,6 +10,8 @@ target 'Movies' do
 
   target 'MoviesTests' do
     inherit! :search_paths
-
+    
+    pod 'RxTest', '~> 6.9.0'
+    pod 'RxBlocking', '~> 6.9.0'
   end
 end

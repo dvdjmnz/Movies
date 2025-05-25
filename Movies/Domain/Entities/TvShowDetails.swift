@@ -9,9 +9,6 @@ import Foundation
 
 struct TvShowDetails {
     let id: Int
-    let name: String
-    let voteAverage: Double
-    let posterPath: URL?
     let lastAirDate: String
     let lastEpisodeName: String
 }

@@ -7,17 +7,11 @@
 
 struct TvShowDetailsDTO: Codable {
     let id: Int
-    let name: String
-    let voteAverage: Double
-    let posterPath: String
     let lastAirDate: String
     let lastEpisodeToAir: LastEpisode
     
     enum CodingKeys: String, CodingKey {
         case id
-        case name
-        case voteAverage = "vote_average"
-        case posterPath = "poster_path"
         case lastAirDate = "last_air_date"
         case lastEpisodeToAir = "last_episode_to_air"
     }
@@ -33,9 +27,6 @@ extension TvShowDetailsDTO: DomainConvertibleEntity {
     func toDomain() -> TvShowDetails {
         TvShowDetails(
             id: id,
-            name: name,
-            voteAverage: voteAverage,
-            posterPath: NetworkConstants.tmdbImagesBaseUrl.appending(path: posterPath),
             lastAirDate: lastAirDate.toLocalizedDate(),
             lastEpisodeName: lastEpisodeToAir.name
         )

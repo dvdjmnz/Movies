@@ -144,13 +144,6 @@ extension MediaListViewController {
         
         viewModelOutput.isLoading
             .asDriver(onErrorJustReturn: false)
-            .flatMapLatest { isLoading in
-                if isLoading {
-                    return Driver.just(isLoading)
-                } else {
-                    return Driver.just(isLoading).delay(.milliseconds(500))
-                }
-            }
             .drive(onNext: { [weak self] isLoading in
                 guard let self = self else { return }
                 if isLoading {
