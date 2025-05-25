@@ -8,7 +8,7 @@
 import Foundation
 
 enum NetworkConstants {
-    static let tmdbApiKey = ""
+    static let tmdbApiKey = "TMDB_API_KEY_HERE"
     
     static let timeout: Int = 30
     
