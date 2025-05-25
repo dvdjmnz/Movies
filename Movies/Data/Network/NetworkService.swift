@@ -88,7 +88,7 @@ class DefaultNetworkService: NSObject, NetworkService {
                 task.cancel()
             }
         }
-        .timeout(.seconds(Constants.Network.timeout),
+        .timeout(.seconds(NetworkConstants.timeout),
                  other: Observable.error(NetworkError.timeout),
                  scheduler: MainScheduler.instance)
     }

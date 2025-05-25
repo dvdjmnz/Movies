@@ -25,7 +25,7 @@ extension MovieDTO: DomainConvertibleEntity {
     func toDomain() -> Movie {
         let posterPathUrl: URL? = {
             guard let posterPath else { return nil }
-            return Constants.Network.tmdbImagesBaseUrl.appending(path: posterPath)
+            return NetworkConstants.tmdbImagesBaseUrl.appending(path: posterPath)
         }()
         return Movie(
             id: id,

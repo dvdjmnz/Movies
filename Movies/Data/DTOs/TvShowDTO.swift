@@ -25,7 +25,7 @@ extension TvShowDTO: DomainConvertibleEntity {
     func toDomain() -> TvShow {
         let posterPathUrl: URL? = {
             guard let posterPath else { return nil }
-            return Constants.Network.tmdbImagesBaseUrl.appending(path: posterPath)
+            return NetworkConstants.tmdbImagesBaseUrl.appending(path: posterPath)
         }()
         return TvShow(
             id: id,

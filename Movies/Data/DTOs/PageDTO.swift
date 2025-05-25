@@ -1,11 +1,11 @@
 //
-//  PageDto.swift
+//  PageDTO.swift
 //  Movies
 //
 //  Created by David Jiménez Guinaldo on 24/5/25.
 //
 
-struct PageDto<T>: Codable where T: Codable, T: DomainConvertibleEntity {
+struct PageDTO<T>: Codable where T: Codable, T: DomainConvertibleEntity {
     let page: Int
     let totalPages: Int
     let results: [T]

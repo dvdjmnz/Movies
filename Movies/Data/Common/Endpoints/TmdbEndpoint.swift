@@ -33,7 +33,7 @@ enum TmdbEndpoint: Endpoint {
     }
     
     var builtUrl: URL {
-        Constants.Network.tmdbApiBaseUrl.appendingPathComponent(endpoint)
+        NetworkConstants.tmdbApiBaseUrl.appendingPathComponent(endpoint)
     }
     
     var method: HttpMethod {
@@ -58,33 +58,33 @@ enum TmdbEndpoint: Endpoint {
         switch self {
         case .getMovieGenres:
             return [
-                Constants.Network.Headers.accept: Constants.Network.Headers.json,
-                Constants.Network.Headers.authorization: "Bearer " + Constants.Network.tmdbApiKey
+                NetworkConstants.Headers.accept: NetworkConstants.Headers.json,
+                NetworkConstants.Headers.authorization: "Bearer " + NetworkConstants.tmdbApiKey
             ]
         case .getTvShowsGenres:
             return [
-                Constants.Network.Headers.accept: Constants.Network.Headers.json,
-                Constants.Network.Headers.authorization: "Bearer " + Constants.Network.tmdbApiKey
+                NetworkConstants.Headers.accept: NetworkConstants.Headers.json,
+                NetworkConstants.Headers.authorization: "Bearer " + NetworkConstants.tmdbApiKey
             ]
         case .getMovies:
             return [
-                Constants.Network.Headers.accept: Constants.Network.Headers.json,
-                Constants.Network.Headers.authorization: "Bearer " + Constants.Network.tmdbApiKey
+                NetworkConstants.Headers.accept: NetworkConstants.Headers.json,
+                NetworkConstants.Headers.authorization: "Bearer " + NetworkConstants.tmdbApiKey
             ]
         case .getTvShows:
             return [
-                Constants.Network.Headers.accept: Constants.Network.Headers.json,
-                Constants.Network.Headers.authorization: "Bearer " + Constants.Network.tmdbApiKey
+                NetworkConstants.Headers.accept: NetworkConstants.Headers.json,
+                NetworkConstants.Headers.authorization: "Bearer " + NetworkConstants.tmdbApiKey
             ]
         case .getMovieDetails:
             return [
-                Constants.Network.Headers.accept: Constants.Network.Headers.json,
-                Constants.Network.Headers.authorization: "Bearer " + Constants.Network.tmdbApiKey
+                NetworkConstants.Headers.accept: NetworkConstants.Headers.json,
+                NetworkConstants.Headers.authorization: "Bearer " + NetworkConstants.tmdbApiKey
             ]
         case .getTvShowDetails:
             return [
-                Constants.Network.Headers.accept: Constants.Network.Headers.json,
-                Constants.Network.Headers.authorization: "Bearer " + Constants.Network.tmdbApiKey
+                NetworkConstants.Headers.accept: NetworkConstants.Headers.json,
+                NetworkConstants.Headers.authorization: "Bearer " + NetworkConstants.tmdbApiKey
             ]
         }
     }
@@ -97,13 +97,13 @@ enum TmdbEndpoint: Endpoint {
             return nil
         case let .getMovies(genre, page):
             return [
-                Constants.Network.Params.genres: genre,
-                Constants.Network.Params.page: page
+                NetworkConstants.Params.genres: genre,
+                NetworkConstants.Params.page: page
             ]
         case let .getTvShows(genre, page):
             return [
-                Constants.Network.Params.genres: genre,
-                Constants.Network.Params.page: page
+                NetworkConstants.Params.genres: genre,
+                NetworkConstants.Params.page: page
             ]
         case .getMovieDetails:
             return nil

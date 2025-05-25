@@ -118,7 +118,7 @@ extension MediaListViewController {
         
         horizontalMenuView.genreSelected
             .do(onNext: { _ in
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
             })
             .bind(to: viewModelInput.genreSelected)
             .disposed(by: disposeBag)

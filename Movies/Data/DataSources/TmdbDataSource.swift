@@ -10,8 +10,8 @@ import RxSwift
 protocol TmdbDataSource {
     func getMovieGenres() -> Observable<[GenreDTO]>
     func getTvShowsGenres() -> Observable<[GenreDTO]>
-    func getMovies(genre: Int, page: Int) -> Observable<PageDto<MovieDTO>>
-    func getTvShows(genre: Int, page: Int) -> Observable<PageDto<TvShowDTO>>
+    func getMovies(genre: Int, page: Int) -> Observable<PageDTO<MovieDTO>>
+    func getTvShows(genre: Int, page: Int) -> Observable<PageDTO<TvShowDTO>>
     func getMovieDetails(movieId: Int) -> Observable<MovieDetailsDTO>
     func getTvShowDetails(tvShowId: Int) -> Observable<TvShowDetailsDTO>
 }
@@ -37,15 +37,15 @@ extension DefaultTmdbDataSource: TmdbDataSource {
         return networkService.execute(request).map(\.genres)
     }
     
-    func getMovies(genre: Int, page: Int) -> Observable<PageDto<MovieDTO>> {
+    func getMovies(genre: Int, page: Int) -> Observable<PageDTO<MovieDTO>> {
         let endpoint = TmdbEndpoint.getMovies(genre: String(genre), page: String(page))
-        let request = APIRequest<PageDto<MovieDTO>>(endpoint: endpoint)
+        let request = APIRequest<PageDTO<MovieDTO>>(endpoint: endpoint)
         return networkService.execute(request)
     }
     
-    func getTvShows(genre: Int, page: Int) -> Observable<PageDto<TvShowDTO>> {
+    func getTvShows(genre: Int, page: Int) -> Observable<PageDTO<TvShowDTO>> {
         let endpoint = TmdbEndpoint.getTvShows(genre: String(genre), page: String(page))
-        let request = APIRequest<PageDto<TvShowDTO>>(endpoint: endpoint)
+        let request = APIRequest<PageDTO<TvShowDTO>>(endpoint: endpoint)
         return networkService.execute(request)
     }
     
