@@ -1,5 +1,5 @@
 //
-//  MovieListViewModel.swift
+//  MediaListViewModel.swift
 //  Movies
 //
 //  Created by David Jiménez Guinaldo on 24/5/25.
@@ -8,33 +8,46 @@
 import Foundation
 import RxSwift
 
-protocol MovieListViewModelInputProtocol: ViewModelInputProtocol {
+protocol MediaListViewModelInputProtocol: ViewModelInputProtocol {
+    associatedtype Item: MediaItem
+    
     var genreSelected: AnyObserver<Genre> { get }
     var refreshTrigger: AnyObserver<Void> { get }
-    var fetchMovieDetails: AnyObserver<Movie> { get }
+    var fetchItemDetails: AnyObserver<Item> { get }
     var loadNextPageTrigger: AnyObserver<Void> { get }
 }
 
-struct MovieListViewModelInput: MovieListViewModelInputProtocol {
-    var genreSelected: AnyObserver<Genre>
-    var refreshTrigger: AnyObserver<Void>
-    var fetchMovieDetails: AnyObserver<Movie>
-    var loadNextPageTrigger: AnyObserver<Void>
-}
-
-protocol MovieListViewModelOutputProtocol: ViewModelOutputProtocol {
+protocol MediaListViewModelOutputProtocol: ViewModelOutputProtocol {
+    associatedtype Item: MediaItem
+    associatedtype Details: MediaItemDetails
+    
     var genresDataSource: Observable<[Genre]> { get }
-    var moviesWithDetailsDataSource: Observable<[MovieWithDetails]> { get }
+    var itemsWithDetailsDataSource: Observable<[MediaItemWithDetails<Item, Details>]> { get }
     var isLoading: Observable<Bool> { get }
 }
 
-struct MovieListViewModelOutput: MovieListViewModelOutputProtocol {
+// MARK: - Concrete Input Protocol
+protocol MediaListViewModelInputConcreteProtocol<Item>: MediaListViewModelInputProtocol where Item: MediaItem {}
+
+// MARK: - Concrete Output Protocol
+protocol MediaListViewModelOutputConcreteProtocol<Item, Details>: MediaListViewModelOutputProtocol where Item: MediaItem, Details: MediaItemDetails {}
+
+// MARK: - Generic Input/Output Structs
+struct MediaListViewModelInput<Item: MediaItem>: MediaListViewModelInputConcreteProtocol {
+    var genreSelected: AnyObserver<Genre>
+    var refreshTrigger: AnyObserver<Void>
+    var fetchItemDetails: AnyObserver<Item>
+    var loadNextPageTrigger: AnyObserver<Void>
+}
+
+struct MediaListViewModelOutput<Item: MediaItem, Details: MediaItemDetails>: MediaListViewModelOutputConcreteProtocol {
     var genresDataSource: Observable<[Genre]>
-    var moviesWithDetailsDataSource: Observable<[MovieWithDetails]>
+    var itemsWithDetailsDataSource: Observable<[MediaItemWithDetails<Item, Details>]>
     var isLoading: Observable<Bool>
 }
 
-class MovieListViewModel: ViewModelProtocol {
+// MARK: - Generic ViewModel
+class MediaListViewModel<Item: MediaItem, Details: MediaItemDetails>: ViewModelProtocol {
     private(set) var disposeBag = DisposeBag()
     
     // MARK: Input and output
@@ -44,16 +57,16 @@ class MovieListViewModel: ViewModelProtocol {
     // MARK: Subjects
     private let genreSelectedSubject = PublishSubject<Genre>()
     private let refreshTriggerSubject = PublishSubject<Void>()
-    private let fetchMovieDetailsSubject = PublishSubject<Movie>()
+    private let fetchItemDetailsSubject = PublishSubject<Item>()
     private let loadNextPageTriggerSubject = PublishSubject<Void>()
     private let genresDataSourceSubject = BehaviorSubject<[Genre]>(value: [])
-    private let moviesWithDetailsDataSourceSubject = BehaviorSubject<[MovieWithDetails]>(value: [])
+    private let itemsWithDetailsDataSourceSubject = BehaviorSubject<[MediaItemWithDetails<Item, Details>]>(value: [])
     private let isLoadingSubject = BehaviorSubject<Bool>(value: false)
     
     // MARK: Caching and state
-    private var cachedMovieDetails: [Int: MovieDetails] = [:]
+    private var cachedItemDetails: [Int: Details] = [:]
     private var pendingDetailRequests: Set<Int> = []
-    private var allMovies: [Movie] = []
+    private var allItems: [Item] = []
     
     // MARK: Pagination state
     private var currentGenreId: Int?
@@ -62,29 +75,28 @@ class MovieListViewModel: ViewModelProtocol {
     private var isLoadingNextPage: Bool = false
     
     // MARK: Use cases
-    private let getMovieGenresUseCase: GetMovieGenresUseCase
-    private let getMoviesUseCase: GetMoviesUseCase
-    private let getMovieDetailsUseCase: GetMovieDetailsUseCase
-    
+    private let getGenresUseCase: () -> Observable<[Genre]>
+    private let getItemsUseCase: (Int, Int) -> Observable<Page<Item>>
+    private let getItemDetailsUseCase: (Int) -> Observable<Details>
     
     // MARK: Init
-    init(getMovieGenresUseCase: GetMovieGenresUseCase,
-         getMoviesUseCase: GetMoviesUseCase,
-         getMovieDetailsUseCase: GetMovieDetailsUseCase) {
-        self.getMovieGenresUseCase = getMovieGenresUseCase
-        self.getMoviesUseCase = getMoviesUseCase
-        self.getMovieDetailsUseCase = getMovieDetailsUseCase
+    init(getGenresUseCase: @escaping () -> Observable<[Genre]>,
+         getItemsUseCase: @escaping (Int, Int) -> Observable<Page<Item>>,
+         getItemDetailsUseCase: @escaping (Int) -> Observable<Details>) {
+        self.getGenresUseCase = getGenresUseCase
+        self.getItemsUseCase = getItemsUseCase
+        self.getItemDetailsUseCase = getItemDetailsUseCase
         
-        input = MovieListViewModelInput(
+        input = MediaListViewModelInput<Item>(
             genreSelected: genreSelectedSubject.asObserver(),
             refreshTrigger: refreshTriggerSubject.asObserver(),
-            fetchMovieDetails: fetchMovieDetailsSubject.asObserver(),
+            fetchItemDetails: fetchItemDetailsSubject.asObserver(),
             loadNextPageTrigger: loadNextPageTriggerSubject.asObserver()
         )
         
-        output = MovieListViewModelOutput(
+        output = MediaListViewModelOutput<Item, Details>(
             genresDataSource: genresDataSourceSubject.asObservable().observe(on: MainScheduler.instance),
-            moviesWithDetailsDataSource: moviesWithDetailsDataSourceSubject.asObservable().observe(on: MainScheduler.instance),
+            itemsWithDetailsDataSource: itemsWithDetailsDataSourceSubject.asObservable().observe(on: MainScheduler.instance),
             isLoading: isLoadingSubject.asObservable().observe(on: MainScheduler.instance)
         )
         
@@ -101,8 +113,8 @@ class MovieListViewModel: ViewModelProtocol {
                 guard let self = self else { return }
                 self.resetPaginationState()
                 self.currentGenreId = genre.id
-                self.updateMoviesWithDetailsDataSource()
-                self.fetchMovies(genreId: genre.id, page: 1, isRefresh: true)
+                self.updateItemsWithDetailsDataSource()
+                self.fetchItems(genreId: genre.id, page: 1, isRefresh: true)
             })
             .disposed(by: disposeBag)
         
@@ -113,14 +125,14 @@ class MovieListViewModel: ViewModelProtocol {
             })
             .disposed(by: disposeBag)
         
-        fetchMovieDetailsSubject
-            .filter { [weak self] movie in
+        fetchItemDetailsSubject
+            .filter { [weak self] item in
                 guard let self = self else { return false }
-                return self.cachedMovieDetails[movie.id] == nil && !self.pendingDetailRequests.contains(movie.id)
+                return self.cachedItemDetails[item.id] == nil && !self.pendingDetailRequests.contains(item.id)
             }
-            .subscribe(onNext: { [weak self] movie in
+            .subscribe(onNext: { [weak self] item in
                 guard let self = self else { return }
-                self.fetchMovieDetails(movieId: movie.id)
+                self.fetchItemDetails(itemId: item.id)
             })
             .disposed(by: disposeBag)
         
@@ -140,13 +152,13 @@ class MovieListViewModel: ViewModelProtocol {
         currentPage = 1
         totalPages = 1
         isLoadingNextPage = false
-        allMovies = []
+        allItems = []
     }
     
     private func refreshCurrentData() {
         if let genreId = currentGenreId {
             resetPaginationState()
-            fetchMovies(genreId: genreId, page: 1, isRefresh: true)
+            fetchItems(genreId: genreId, page: 1, isRefresh: true)
         } else {
             fetchGenres()
         }
@@ -155,25 +167,25 @@ class MovieListViewModel: ViewModelProtocol {
     private func loadNextPage(genreId: Int) {
         guard !isLoadingNextPage && currentPage < totalPages else { return }
         let nextPage = currentPage + 1
-        fetchMovies(genreId: genreId, page: nextPage, isRefresh: false)
+        fetchItems(genreId: genreId, page: nextPage, isRefresh: false)
     }
     
-    private func updateMoviesWithDetailsDataSource() {
-        let moviesWithDetails = allMovies.map { movie in
-            MovieWithDetails(
-                movie: movie,
-                details: cachedMovieDetails[movie.id]
+    private func updateItemsWithDetailsDataSource() {
+        let itemsWithDetails = allItems.map { item in
+            MediaItemWithDetails<Item, Details>(
+                item: item,
+                details: cachedItemDetails[item.id]
             )
         }
-        moviesWithDetailsDataSourceSubject.onNext(moviesWithDetails)
+        itemsWithDetailsDataSourceSubject.onNext(itemsWithDetails)
     }
 }
 
-extension MovieListViewModel {
+extension MediaListViewModel {
     private func fetchGenres() {
         isLoadingSubject.onNext(true)
         
-        getMovieGenresUseCase.execute()
+        getGenresUseCase()
             .observe(on: MainScheduler.instance)
             .subscribe(
                 onNext: { [weak self] genres in
@@ -183,7 +195,7 @@ extension MovieListViewModel {
                     if let firstGenre = genres.first {
                         self.resetPaginationState()
                         self.currentGenreId = firstGenre.id
-                        self.fetchMovies(genreId: firstGenre.id, page: 1, isRefresh: true)
+                        self.fetchItems(genreId: firstGenre.id, page: 1, isRefresh: true)
                     }
                 },
                 onError: { [weak self] error in
@@ -194,26 +206,26 @@ extension MovieListViewModel {
             .disposed(by: disposeBag)
     }
     
-    private func fetchMovies(genreId: Int, page: Int, isRefresh: Bool) {
+    private func fetchItems(genreId: Int, page: Int, isRefresh: Bool) {
         if isLoadingNextPage && !isRefresh { return }
         isLoadingNextPage = true
         isLoadingSubject.onNext(true)
         
-        getMoviesUseCase.execute(genre: genreId, page: page)
+        getItemsUseCase(genreId, page)
             .observe(on: MainScheduler.instance)
             .subscribe(
-                onNext: { [weak self] moviesPage in
+                onNext: { [weak self] itemsPage in
                     guard let self = self else { return }
-                    self.currentPage = moviesPage.page
-                    self.totalPages = moviesPage.totalPages
+                    self.currentPage = itemsPage.page
+                    self.totalPages = itemsPage.totalPages
                     
                     if isRefresh {
-                        self.allMovies = moviesPage.results
+                        self.allItems = itemsPage.results
                     } else {
-                        self.allMovies.append(contentsOf: moviesPage.results)
+                        self.allItems.append(contentsOf: itemsPage.results)
                     }
                     
-                    self.updateMoviesWithDetailsDataSource()
+                    self.updateItemsWithDetailsDataSource()
                     self.isLoadingSubject.onNext(false)
                     self.isLoadingNextPage = false
                 },
@@ -226,21 +238,21 @@ extension MovieListViewModel {
             .disposed(by: disposeBag)
     }
     
-    private func fetchMovieDetails(movieId: Int) {
-        pendingDetailRequests.insert(movieId)
+    private func fetchItemDetails(itemId: Int) {
+        pendingDetailRequests.insert(itemId)
         
-        getMovieDetailsUseCase.execute(movieId: movieId)
+        getItemDetailsUseCase(itemId)
             .observe(on: MainScheduler.instance)
             .subscribe(
-                onNext: { [weak self] movieDetails in
+                onNext: { [weak self] itemDetails in
                     guard let self = self else { return }
-                    self.cachedMovieDetails[movieDetails.id] = movieDetails
-                    self.pendingDetailRequests.remove(movieId)
-                    self.updateMoviesWithDetailsDataSource()
+                    self.cachedItemDetails[itemDetails.id] = itemDetails
+                    self.pendingDetailRequests.remove(itemId)
+                    self.updateItemsWithDetailsDataSource()
                 },
                 onError: { [weak self] error in
                     guard let self = self else { return }
-                    self.pendingDetailRequests.remove(movieId)
+                    self.pendingDetailRequests.remove(itemId)
                 }
             )
             .disposed(by: disposeBag)

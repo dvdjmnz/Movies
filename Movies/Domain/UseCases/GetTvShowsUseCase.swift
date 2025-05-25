@@ -8,7 +8,7 @@
 import RxSwift
 
 protocol GetTvShowsUseCase {
-    func execute(genre: Int) -> Observable<Page<TvShow>>
+    func execute(genre: Int, page: Int) -> Observable<Page<TvShow>>
 }
 
 class DefaultGetTvShowsUseCase {
@@ -20,7 +20,7 @@ class DefaultGetTvShowsUseCase {
 }
 
 extension DefaultGetTvShowsUseCase: GetTvShowsUseCase {
-    func execute(genre: Int) -> Observable<Page<TvShow>> {
-        repository.getTvShows(genre: genre)
+    func execute(genre: Int, page: Int) -> Observable<Page<TvShow>> {
+        repository.getTvShows(genre: genre, page: page)
     }
 }

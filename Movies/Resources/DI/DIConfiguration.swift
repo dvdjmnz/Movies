@@ -24,11 +24,12 @@ class DIConfiguration {
     private func setup() {
         var assemblies = [Assembly]()
         // PRESENTATION
-        assemblies.append(MovieListAssembly())
+        assemblies.append(MediaListAssembly())
         // DOMAIN
         assemblies.append(contentsOf: DataAssembly().assemblies)
         // DATA
         assemblies.append(UseCasesAssembly())
+        
         assembler = Assembler(assemblies, container: container)
     }
 }

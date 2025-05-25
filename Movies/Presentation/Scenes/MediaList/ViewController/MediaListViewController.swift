@@ -1,5 +1,5 @@
 //
-//  ListViewController.swift
+//  MediaListViewController.swift
 //  Movies
 //
 //  Created by David Jiménez Guinaldo on 24/5/25.
@@ -9,26 +9,31 @@ import UIKit
 import SnapKit
 import RxCocoa
 
-class MovieListViewController: BaseViewController {
-    private enum Constants {
-        static let cellMarginSpacing: CGFloat = 24
-        static let cellSizeRatio: CGFloat = 1.5
-        static let loadMoreThreshold: CGFloat = 160
-    }
-    
+fileprivate enum FileConstants {
+    static let cellMarginSpacing: CGFloat = 24
+    static let cellSizeRatio: CGFloat = 1.5
+    static let loadMoreThreshold: CGFloat = 160
+}
+
+// MARK: - Type Aliases
+typealias MovieListViewController = MediaListViewController<Movie, MovieDetails>
+typealias TvShowListViewController = MediaListViewController<TvShow, TvShowDetails>
+
+class MediaListViewController<Item: MediaItem, Details: MediaItemDetails>: BaseViewController, UICollectionViewDelegateFlowLayout, ScrollableViewController, UIScrollViewDelegate {
     private lazy var refreshControl: UIRefreshControl = {
-         let refreshControl = UIRefreshControl()
-         refreshControl.tintColor = .systemPurple
-         return refreshControl
-     }()
+        let refreshControl = UIRefreshControl()
+        refreshControl.tintColor = .systemPurple
+        return refreshControl
+    }()
     
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
+        scrollView.showsVerticalScrollIndicator = false
         scrollView.delegate = self
         scrollView.refreshControl = refreshControl
         return scrollView
     }()
-
+    
     private lazy var scrollContainerView: UIView = {
         let view = UIView()
         view.clipsToBounds = true
@@ -47,7 +52,7 @@ class MovieListViewController: BaseViewController {
         collectionView.backgroundColor = .clear
         collectionView.delegate = self
         collectionView.isScrollEnabled = false
-        collectionView.register(ListItemCell.self)
+        collectionView.register(MediaListCell.self)
         return collectionView
     }()
     
@@ -64,12 +69,45 @@ class MovieListViewController: BaseViewController {
         setupUI()
         setupConstraints()
     }
+    
+    // MARK: - UICollectionViewDelegateFlowLayout
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let availableWidth = collectionView.frame.width - FileConstants.cellMarginSpacing * 3
+        let itemWidth = availableWidth / 2
+        let itemHeight = itemWidth * FileConstants.cellSizeRatio
+        return CGSize(width: itemWidth, height: itemHeight)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        UIEdgeInsets(top: 0, left: FileConstants.cellMarginSpacing, bottom: 0, right: FileConstants.cellMarginSpacing)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        FileConstants.cellMarginSpacing
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+        FileConstants.cellMarginSpacing
+    }
+    
+    // MARK: - ScrollableViewController
+    func scrollToTop() {
+        let topOffset = CGPoint(x: 0, y: -scrollView.adjustedContentInset.top)
+        scrollView.setContentOffset(topOffset, animated: true)
+    }
+    
+    // MARK: - UIScrollViewDelegate
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        checkForInfiniteScroll()
+    }
 }
 
-extension MovieListViewController {
+// MARK: - Private Methods
+extension MediaListViewController {
     private func setupBindings() {
-        guard let viewModelInput = viewModel?.input as? MovieListViewModelInputProtocol else { return }
-        guard let viewModelOutput = viewModel?.output as? MovieListViewModelOutputProtocol else { return }
+        guard let specificViewModel = viewModel as? MediaListViewModel<Item, Details> else { return }
+        let viewModelInput = specificViewModel.input as! MediaListViewModelInput<Item>
+        let viewModelOutput = specificViewModel.output as! MediaListViewModelOutput<Item, Details>
         
         refreshControl.rx.controlEvent(.valueChanged)
             .do(onNext: { _ in
@@ -90,23 +128,29 @@ extension MovieListViewController {
                 .drive(onNext: horizontalMenuView.configureButtons)
                 .disposed(by: disposeBag)
         
-        viewModelOutput.moviesWithDetailsDataSource
+        viewModelOutput.itemsWithDetailsDataSource
             .asDriver(onErrorJustReturn: [])
             .drive(collectionView.rx.items(
-                cellIdentifier: ListItemCell.reuseIdentifier,
-                cellType: ListItemCell.self
-            )) { [weak self] index, movieWithDetails, cell in
-                guard let self else { return }
-                cell.configure(movie: movieWithDetails.movie)
-                cell.configure(movieDetails: movieWithDetails.details)
-                if movieWithDetails.details == nil, let viewModelInput = viewModel?.input as? MovieListViewModelInputProtocol {
-                    viewModelInput.fetchMovieDetails.onNext(movieWithDetails.movie)
+                cellIdentifier: MediaListCell.reuseIdentifier,
+                cellType: MediaListCell.self
+            )) { index, itemWithDetails, cell in
+                cell.configure(item: itemWithDetails.item)
+                cell.configure(details: itemWithDetails.details)
+                if itemWithDetails.details == nil {
+                    viewModelInput.fetchItemDetails.onNext(itemWithDetails.item)
                 }
             }
             .disposed(by: disposeBag)
         
         viewModelOutput.isLoading
             .asDriver(onErrorJustReturn: false)
+            .flatMapLatest { isLoading in
+                if isLoading {
+                    return Driver.just(isLoading)
+                } else {
+                    return Driver.just(isLoading).delay(.milliseconds(500))
+                }
+            }
             .drive(onNext: { [weak self] isLoading in
                 guard let self = self else { return }
                 if isLoading {
@@ -155,47 +199,14 @@ extension MovieListViewController {
     }
     
     private func checkForInfiniteScroll() {
-        guard let viewModelInput = viewModel?.input as? MovieListViewModelInputProtocol else { return }
+        guard let specificViewModel = viewModel as? MediaListViewModel<Item, Details> else { return }
+        let viewModelInput = specificViewModel.input as! MediaListViewModelInput<Item>
         let scrollView = self.scrollView
         let contentHeight = scrollView.contentSize.height
         let scrollViewHeight = scrollView.frame.height
         let scrollOffset = scrollView.contentOffset.y
-        if scrollOffset + scrollViewHeight >= contentHeight - Constants.loadMoreThreshold {
+        if scrollOffset + scrollViewHeight >= contentHeight - FileConstants.loadMoreThreshold {
             viewModelInput.loadNextPageTrigger.onNext(())
         }
-    }
-}
-
-extension MovieListViewController: UICollectionViewDelegateFlowLayout {
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let availableWidth = collectionView.frame.width - Constants.cellMarginSpacing * 3
-        let itemWidth = availableWidth / 2
-        let itemHeight = itemWidth * Constants.cellSizeRatio
-        return CGSize(width: itemWidth, height: itemHeight)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        UIEdgeInsets(top: 0, left: Constants.cellMarginSpacing, bottom: 0, right: Constants.cellMarginSpacing)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        Constants.cellMarginSpacing
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        Constants.cellMarginSpacing
-    }
-}
-
-extension MovieListViewController: UIScrollViewDelegate {
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        checkForInfiniteScroll()
-    }
-}
-
-extension MovieListViewController: ScrollableViewController {
-    func scrollToTop() {
-        let topOffset = CGPoint(x: 0, y: -scrollView.adjustedContentInset.top)
-        scrollView.setContentOffset(topOffset, animated: true)
     }
 }

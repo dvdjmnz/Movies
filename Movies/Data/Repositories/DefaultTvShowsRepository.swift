@@ -16,8 +16,8 @@ class DefaultTvShowsRepository {
 }
     
 extension DefaultTvShowsRepository: TvShowsRepository {
-    func getTvShows(genre: Int) -> Observable<Page<TvShow>> {
-        tmdbDataSource.getTvShows(genre: genre).map { $0.toDomain() }
+    func getTvShows(genre: Int, page: Int) -> Observable<Page<TvShow>> {
+        tmdbDataSource.getTvShows(genre: genre, page: page).map { $0.toDomain() }
     }
     
     func getTvShowDetails(tvShowId: Int) -> Observable<TvShowDetails> {

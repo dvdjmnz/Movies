@@ -5,7 +5,6 @@
 //  Created by David Jiménez Guinaldo on 24/5/25.
 //
 
-
 import UIKit
 
 class MainTabBarController: UITabBarController {
@@ -23,12 +22,12 @@ class MainTabBarController: UITabBarController {
 extension MainTabBarController {
     private func setupTabs() {
         let movieListViewController = DIConfiguration.shared.container.resolve(MovieListViewController.self)!
-        let tvShowListViewController = UIViewController()
+        let tvShowListViewController = DIConfiguration.shared.container.resolve(TvShowListViewController.self)!
         UITabBar.appearance().tintColor = .systemPurple
         movieListViewController.tabBarItem.title = "Movies"
-        movieListViewController.tabBarItem.image = UIImage(systemName: "film")
+        movieListViewController.tabBarItem.image = .movie
         tvShowListViewController.tabBarItem.title = "TV Shows"
-        tvShowListViewController.tabBarItem.image = UIImage(systemName: "tv")
+        tvShowListViewController.tabBarItem.image = .tvShow
         viewControllers = [
             movieListViewController,
             tvShowListViewController

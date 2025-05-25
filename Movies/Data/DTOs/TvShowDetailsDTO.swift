@@ -36,7 +36,7 @@ extension TvShowDetailsDTO: DomainConvertibleEntity {
             name: name,
             voteAverage: voteAverage,
             posterPath: Constants.Network.tmdbImagesBaseUrl.appending(path: posterPath),
-            lastAirDate: lastAirDate,
+            lastAirDate: lastAirDate.toLocalizedDate(),
             lastEpisodeName: lastEpisodeToAir.name
         )
     }

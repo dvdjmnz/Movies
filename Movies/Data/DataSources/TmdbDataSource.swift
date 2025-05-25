@@ -11,7 +11,7 @@ protocol TmdbDataSource {
     func getMovieGenres() -> Observable<[GenreDTO]>
     func getTvShowsGenres() -> Observable<[GenreDTO]>
     func getMovies(genre: Int, page: Int) -> Observable<PageDto<MovieDTO>>
-    func getTvShows(genre: Int) -> Observable<PageDto<TvShowDTO>>
+    func getTvShows(genre: Int, page: Int) -> Observable<PageDto<TvShowDTO>>
     func getMovieDetails(movieId: Int) -> Observable<MovieDetailsDTO>
     func getTvShowDetails(tvShowId: Int) -> Observable<TvShowDetailsDTO>
 }
@@ -43,8 +43,8 @@ extension DefaultTmdbDataSource: TmdbDataSource {
         return networkService.execute(request)
     }
     
-    func getTvShows(genre: Int) -> Observable<PageDto<TvShowDTO>> {
-        let endpoint = TmdbEndpoint.getTvShows(genre: String(genre))
+    func getTvShows(genre: Int, page: Int) -> Observable<PageDto<TvShowDTO>> {
+        let endpoint = TmdbEndpoint.getTvShows(genre: String(genre), page: String(page))
         let request = APIRequest<PageDto<TvShowDTO>>(endpoint: endpoint)
         return networkService.execute(request)
     }

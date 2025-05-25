@@ -8,7 +8,7 @@
 import RxSwift
 
 protocol TvShowsRepository {
-    func getTvShows(genre: Int) -> Observable<Page<TvShow>>
+    func getTvShows(genre: Int, page: Int) -> Observable<Page<TvShow>>
     func getTvShowDetails(tvShowId: Int) -> Observable<TvShowDetails>
 }
 

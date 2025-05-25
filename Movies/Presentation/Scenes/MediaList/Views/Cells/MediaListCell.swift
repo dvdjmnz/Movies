@@ -8,12 +8,10 @@
 import UIKit
 import SnapKit
 
-class ListItemCell: ResizableCollectionViewCell {
+class MediaListCell: ResizableCollectionViewCell {
     enum Constants {
         static let cornerRadius: CGFloat = 8
     }
-    
-    var movie: Movie?
     
     private lazy var containerView: UIView = {
         let view = UIView()
@@ -53,7 +51,7 @@ class ListItemCell: ResizableCollectionViewCell {
     private lazy var ratingLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
-        label.font = .systemFont(ofSize: 18, weight: .semibold)
+        label.font = .headline1
         label.textColor = .white
         label.textAlignment = .left
         return label
@@ -64,7 +62,7 @@ class ListItemCell: ResizableCollectionViewCell {
         label.numberOfLines = 2
         label.minimumScaleFactor = 0.5
         label.adjustsFontSizeToFitWidth = true
-        label.font = .systemFont(ofSize: 14, weight: .bold)
+        label.font = .headline2
         label.textColor = .white
         label.textAlignment = .left
         return label
@@ -73,7 +71,7 @@ class ListItemCell: ResizableCollectionViewCell {
     private lazy var extraInfo1Label: UILabel = {
         let label = UILabel()
         label.numberOfLines = 1
-        label.font = .systemFont(ofSize: 12)
+        label.font = .caption1
         label.textColor = .white
         label.textAlignment = .left
         return label
@@ -82,7 +80,7 @@ class ListItemCell: ResizableCollectionViewCell {
     private lazy var extraInfo2Label: UILabel = {
         let label = UILabel()
         label.numberOfLines = 1
-        label.font = .systemFont(ofSize: 12)
+        label.font = .caption1
         label.textColor = .white
         label.textAlignment = .left
         return label
@@ -98,17 +96,16 @@ class ListItemCell: ResizableCollectionViewCell {
         super.init(coder: aDecoder)
     }
     
-    func configure(movie: Movie) {
-        self.movie = movie
-        ratingLabel.text = String(movie.voteAverage)
-        titleLabel.text = movie.title
-        backgroundImageView.setImage(url: movie.posterPath, hasLoading: true)
+    func configure<Item: MediaItem>(item: Item) {
+        ratingLabel.text = String(item.voteAverage)
+        titleLabel.text = item.title
+        backgroundImageView.setImage(url: item.posterPath, hasLoading: true)
     }
     
-    func configure(movieDetails: MovieDetails?) {
-        if let movieDetails {
-            extraInfo1Label.text = movieDetails.budget
-            extraInfo2Label.text = movieDetails.revenue
+    func configure<Details: MediaItemDetails>(details: Details?) {
+        if let details {
+            extraInfo1Label.text = details.primaryInfo
+            extraInfo2Label.text = details.secondaryInfo
         } else {
             extraInfo1Label.text = "-"
             extraInfo2Label.text = "-"
@@ -117,7 +114,7 @@ class ListItemCell: ResizableCollectionViewCell {
 }
 
 // MARK: Private Methods
-private extension ListItemCell {
+private extension MediaListCell {
     private func setupUI() {
         backgroundColor = .clear
         containerView.addSubview(backgroundImageView)
