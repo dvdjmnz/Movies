@@ -8,6 +8,6 @@
 import RxSwift
 
 protocol MoviesRepository {
-    func getMovies(genre: Int) -> Observable<Page<Movie>>
+    func getMovies(genre: Int, page: Int) -> Observable<Page<Movie>>
     func getMovieDetails(movieId: Int) -> Observable<MovieDetails>
 }

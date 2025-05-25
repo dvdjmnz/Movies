@@ -7,17 +7,11 @@
 
 struct MovieDetailsDTO: Codable {
     let id: Int
-    let title: String
-    let voteAverage: Double
-    let posterPath: String
     let revenue: Int
     let budget: Int
     
     enum CodingKeys: String, CodingKey {
         case id
-        case title
-        case voteAverage = "vote_average"
-        case posterPath = "poster_path"
         case revenue = "revenue"
         case budget = "budget"
     }
@@ -27,11 +21,8 @@ extension MovieDetailsDTO: DomainConvertibleEntity {
     func toDomain() -> MovieDetails {
         MovieDetails(
             id: id,
-            title: title,
-            voteAverage: voteAverage,
-            posterPath: Constants.Network.tmdbImagesBaseUrl.appending(path: posterPath),
-            revenue: revenue,
-            budget: budget
+            revenue: revenue.toUSDCurrencyCompact(),
+            budget: budget.toUSDCurrencyCompact()
         )
     }
 }

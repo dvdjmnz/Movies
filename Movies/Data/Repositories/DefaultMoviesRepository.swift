@@ -16,8 +16,8 @@ class DefaultMoviesRepository {
 }
     
 extension DefaultMoviesRepository: MoviesRepository {
-    func getMovies(genre: Int) -> Observable<Page<Movie>> {
-        tmdbDataSource.getMovies(genre: genre).map { $0.toDomain() }
+    func getMovies(genre: Int, page: Int) -> Observable<Page<Movie>> {
+        tmdbDataSource.getMovies(genre: genre, page: page).map { $0.toDomain() }
     }
     
     func getMovieDetails(movieId: Int) -> Observable<MovieDetails> {

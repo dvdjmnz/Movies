@@ -10,6 +10,6 @@ import Foundation
 struct Movie: Codable {
     let id: Int
     let title: String
-    let voteAverage: Double
+    let voteAverage: String
     let posterPath: URL?
 }

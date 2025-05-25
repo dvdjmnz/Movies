@@ -24,7 +24,7 @@ extension TvShowDTO: DomainConvertibleEntity {
         TvShow(
             id: id,
             name: name,
-            voteAverage: voteAverage,
+            voteAverage: voteAverage.toStringWithOneDecimal(),
             posterPath: Constants.Network.tmdbImagesBaseUrl.appending(path: posterPath)
         )
     }

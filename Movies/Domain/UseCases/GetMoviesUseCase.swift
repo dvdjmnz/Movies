@@ -8,7 +8,7 @@
 import RxSwift
 
 protocol GetMoviesUseCase {
-    func execute(genre: Int) -> Observable<Page<Movie>>
+    func execute(genre: Int, page: Int) -> Observable<Page<Movie>>
 }
 
 class DefaultGetMoviesUseCase {
@@ -20,7 +20,7 @@ class DefaultGetMoviesUseCase {
 }
 
 extension DefaultGetMoviesUseCase: GetMoviesUseCase {
-    func execute(genre: Int) -> Observable<Page<Movie>> {
-        repository.getMovies(genre: genre)
+    func execute(genre: Int, page: Int) -> Observable<Page<Movie>> {
+        repository.getMovies(genre: genre, page: page)
     }
 }

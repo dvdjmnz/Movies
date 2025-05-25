@@ -9,9 +9,6 @@ import Foundation
 
 struct MovieDetails {
     let id: Int
-    let title: String
-    let voteAverage: Double
-    let posterPath: URL?
-    let revenue: Int
-    let budget: Int
+    let revenue: String
+    let budget: String
 }

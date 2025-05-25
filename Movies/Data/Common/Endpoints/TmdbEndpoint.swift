@@ -10,7 +10,7 @@ import Foundation
 enum TmdbEndpoint: Endpoint {
     case getMovieGenres
     case getTvShowsGenres
-    case getMovies(genre: String)
+    case getMovies(genre: String, page: String)
     case getTvShows(genre: String)
     case getMovieDetails(movieId: String)
     case getTvShowDetails(tvShowId: String)
@@ -95,8 +95,11 @@ enum TmdbEndpoint: Endpoint {
             return nil
         case .getTvShowsGenres:
             return nil
-        case let .getMovies(genre):
-            return [Constants.Network.Params.genres: genre]
+        case let .getMovies(genre, page):
+            return [
+                Constants.Network.Params.genres: genre,
+                Constants.Network.Params.page: page,
+            ]
         case let .getTvShows(genre):
             return [Constants.Network.Params.genres: genre]
         case .getMovieDetails:

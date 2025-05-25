@@ -12,8 +12,9 @@ import Foundation
 class DIConfiguration {
     static let shared = DIConfiguration()
     
+    let container: Container
+    
     private var assembler: Assembler!
-    private let container: Container
     
     private init() {
         container = Container()
@@ -23,6 +24,7 @@ class DIConfiguration {
     private func setup() {
         var assemblies = [Assembly]()
         // PRESENTATION
+        assemblies.append(MovieListAssembly())
         // DOMAIN
         assemblies.append(contentsOf: DataAssembly().assemblies)
         // DATA

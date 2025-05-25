@@ -29,6 +29,7 @@ enum Constants {
 
         enum Params {
             static let genres = "with_genres"
+            static let page = "page"
         }
     }
 }

@@ -10,6 +10,6 @@ import Foundation
 struct TvShow {
     let id: Int
     let name: String
-    let voteAverage: Double
+    let voteAverage: String
     let posterPath: URL?
 }

@@ -24,7 +24,7 @@ extension MovieDTO: DomainConvertibleEntity {
         Movie(
             id: id,
             title: title,
-            voteAverage: voteAverage,
+            voteAverage: voteAverage.toStringWithOneDecimal(),
             posterPath: Constants.Network.tmdbImagesBaseUrl.appending(path: posterPath)
         )
     }
